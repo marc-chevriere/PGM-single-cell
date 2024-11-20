@@ -1,0 +1,6 @@
+# Fichier à exclure
+
+.DS_Store
+data/
+tb_logs/
+wandb/
