@@ -4,3 +4,5 @@
 data/
 tb_logs/
 wandb/
+
+saved_model_dir/
