@@ -110,7 +110,7 @@ def main():
         else:
             raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
 
-        print("Train = ",args.training)
+
         if args.training:
             print(f"Training {model_name}...")
             model.train(max_epochs=max_epochs, logger=None)
@@ -120,7 +120,7 @@ def main():
                 print(f"Model saved at : {model_save}")
         else:
             if model_save:
-                model = scvi.model.SCVI.load(model_save, adata=adata)
+                model = SimpleVAEModel.load(model_save, adata=adata)
                 print(f"Model {model_name} succesfully charged from : {model_save}")
             else:
                 raise ValueError("No model given")
