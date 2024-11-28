@@ -91,8 +91,10 @@ def main():
 
 
         if model_name == "simple_vae":
+            SimpleVAEModel.setup_anndata(adata)
             model = SimpleVAEModel(adata, n_latent=latent_dim)
         elif model_name == "gm_vae":
+            GMVAEModel.setup_anndata(adata)
             model = GMVAEModel(adata, n_latent=latent_dim)
         else:
             raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
