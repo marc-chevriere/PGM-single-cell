@@ -22,7 +22,7 @@ def opts() -> argparse.ArgumentParser:
         help="DataSet (e.g cortex)",
     )
     parser.add_argument(
-        "--latent_dim",
+        "--latent_dims",
         type=int,
         nargs="+",
         default=[10],
@@ -52,7 +52,7 @@ def opts() -> argparse.ArgumentParser:
         help="Train the model or you have already a train model",
     )
     parser.add_argument(
-        "--model_save",
+        "--model_saves",
         type=str,
         nargs="+",
         default=None,
@@ -85,7 +85,7 @@ def main():
 
 
     for model_name, latent_dim, model_save, max_epochs in zip(
-        args.model_names, args.latent_dim, args.model_saves, args.max_epochs or [None] * len(args.model_names)
+        args.model_names, args.latent_dims, args.model_saves, args.max_epochs or [None] * len(args.model_names)
     ):
         print(f"{model_name} with {latent_dim} latent dim")
 
