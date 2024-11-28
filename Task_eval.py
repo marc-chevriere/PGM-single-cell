@@ -26,13 +26,13 @@ def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = Tru
 
     """
     if precise : 
-        type = "precise_labels"
+        style = "precise_labels"
     else : 
-        type = "cell_type"
+        style = "cell_type"
 
-    true_labels = (data.obs[type]).to_numpy()
+    true_labels = (data.obs[style]).to_numpy()
 
-    if type(model)==GMVAEModel : 
+    if type(model) == GMVAEModel : 
         inference = model.module.inference(torch.tensor(data.X))
         qzm = inference["qzm"]  
         qzv = inference["qzv"] 
