@@ -51,7 +51,7 @@ def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = Tru
     homogeneity = homogeneity_score(true_labels, predicted_labels)
     completeness = completeness_score(true_labels, predicted_labels)
     v_measure = v_measure_score(true_labels, predicted_labels)
-    accuracy = cluster_accuracy(true_labels.to_numpy(dtype=int), predicted_labels)
+    accuracy = cluster_accuracy(true_labels, predicted_labels)
 
     print("Simple VAE :")
     print(f"  Adjusted Rand Index (ARI): {ari:.4f}")

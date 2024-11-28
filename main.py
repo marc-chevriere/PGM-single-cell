@@ -3,6 +3,7 @@
 import argparse
 import os
 import scvi
+import matplotlib.pyplot as plt
 
 from anndata import AnnData
 from scvi_perso import SimpleVAEModel
@@ -119,6 +120,7 @@ def main():
             print(f"Comparison mode for {model_name}")
             print("Visualization CLustering")
             vizu_latent_rep(adata,model)
+            plt.show
             print("-" * 50)
             print("Clustering Eval")
             clustering_eval(adata,model)
