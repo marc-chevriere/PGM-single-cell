@@ -3,6 +3,7 @@
 
 #Import 
 import scanpy as sc
+import os
 from anndata import AnnData
 #from scvi_perso import SimpleVAEModel, SimpleVAEModule
 from scvi.model.base import BaseModelClass
@@ -57,7 +58,10 @@ def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False,
 
     plt.tight_layout()
     if save : 
-        plt.savefig(f"{rep_save}/img/Model_Latent.png")
+        save_path = f"{rep_save}/img/Model_Latent.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        print(f"Image save in {rep_save}/img")
     plt.show()
 
 

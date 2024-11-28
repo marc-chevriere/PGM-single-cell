@@ -130,7 +130,6 @@ def main():
             print(f"Comparison mode for {model_name}")
             print("Visualization CLustering")
             vizu_latent_rep(adata,model,save=True,rep_save=model_save)
-            print(f"Image save in {model_save}/img")
             plt.show()
             print("-" * 50)
             print("Clustering Eval")
