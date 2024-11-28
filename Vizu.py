@@ -60,7 +60,7 @@ def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False,
         qzv = inference["qzv"] 
         probs_y = inference["probs_y"]  
 
-        latent = np.array(sample_from_gmm(qzm, qzv, probs_y))
+        latent = sample_from_gmm(qzm, qzv, probs_y).detach().numpy()
     else : 
         latent = model.get_latent_representation(adata)
     latent_data = AnnData(X = latent, obs = adata.obs)
