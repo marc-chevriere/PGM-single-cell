@@ -106,7 +106,7 @@ def main():
             model.train(max_epochs=max_epochs, logger=None)
             print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
             if model_save:
-                model.save(model_save)
+                model.save(model_save,overwrite=True)
                 print(f"Model saved at : {model_save}")
         else:
             if model_save:
