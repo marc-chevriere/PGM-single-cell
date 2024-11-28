@@ -4,6 +4,7 @@ import argparse
 import os
 import scvi
 
+from anndata import AnnData
 from scvi_perso import SimpleVAEModel
 from scviGMvae import GMVAEModel
 from Vizu import vizu_latent_rep
@@ -15,10 +16,10 @@ def opts() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="RecVis A3 training script")
     parser.add_argument(
         "--data",
-        type=str,
-        default="Cortex",
+        type=AnnData,
+        default=None,
         metavar="D",
-        help="Type of data",
+        help="DataSet (e.g cortex)",
     )
     parser.add_argument(
         "--latent_dim",
@@ -34,14 +35,14 @@ def opts() -> argparse.ArgumentParser:
         nargs="+",
         default="",
         metavar="MOD",
-        help="Name of the model for model and transform instantiation",
+        help="Name of the model",
     )
     parser.add_argument(
-        "--comparison",
+        "--eval",
         type=bool,
         default=True,
         metavar="CO",
-        help="Comparison Mode",
+        help="Evaluation Mode",
     )
     parser.add_argument(
         "--training",
@@ -56,7 +57,7 @@ def opts() -> argparse.ArgumentParser:
         nargs="+",
         default=None,
         metavar="MS",
-        help="Emplacement and Names of the save model or the emplacement where you want to save the model",
+        help="Emplacement of the save model or the emplacement where you want to save the model(if Training=True)",
     )
     parser.add_argument(
         "--max_epochs",
@@ -71,46 +72,36 @@ def opts() -> argparse.ArgumentParser:
 
 
 def main():
-    """ Default main function """
-
-    args = opts()
-
-    if args.data == "cortex":
-        adata = scvi.data.cortex()
-
-    n_latent = args.latent_dim
-    for name_models in args.model_names : 
-        if args.Training : 
-            if name_models == "simple_vae":
-                SimpleVAEModel.setup_anndata(adata)
-                simple_vae = SimpleVAEModel(adata, n_latent=n_latent)
-                
-def main():
     """Main function for training and evaluation."""
     args = opts()
 
 
-    if args.data == "cortex":
+    if args.data == None:
+        print(f"Importing cortex dataset...")
         adata = scvi.data.cortex()
+        print(f"cortex dataset succesfully imported.")
+    else : 
+        adata = args.data
 
 
     for model_name, latent_dim, model_save, max_epochs in zip(
         args.model_names, args.latent_dims, args.model_saves, args.max_epochs or [None] * len(args.model_names)
     ):
-        print(f" {model_name} with {latent_dim} latent dim")
+        print(f"{model_name} with {latent_dim} latent dim")
 
 
-        if model_name == "SimpleVAE":
+        if model_name == "simple_vae":
             model = SimpleVAEModel(adata, n_latent=latent_dim)
-        elif model_name == "GMVAE":
+        elif model_name == "gm_vae":
             model = GMVAEModel(adata, n_latent=latent_dim)
         else:
-            raise ValueError(f"Unknown model : {model_name}")
+            raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
 
 
         if args.training:
+            print(f"Training {model_name}...")
             model.train(max_epochs=max_epochs, logger=None)
-            print(f"Model {model_name} train with success.")
+            print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
             if model_save:
                 model.save(model_save)
                 print(f"Model saved at : {model_save}")
@@ -121,8 +112,8 @@ def main():
             else:
                 raise ValueError("No model given")
 
-        # Évaluation et comparaison
-        if args.comparison:
+        # Evaluation
+        if args.eval:
             print(f"Comparison mode for {model_name}")
             print("Visualization CLustering")
             vizu_latent_rep(adata,model)
