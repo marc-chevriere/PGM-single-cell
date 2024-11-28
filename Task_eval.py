@@ -90,6 +90,7 @@ def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.ar
         imputed_values = generative_outputs["nb_mean"].numpy() 
 
     # L1 distance for corrupted data
+    print(data.shape,data[mask].shape,imputed_values.shape,imputed_values[mask].shape)
     l1_distances = np.abs(data[mask] - imputed_values[mask])
     median_l1 = np.median(l1_distances)
     
