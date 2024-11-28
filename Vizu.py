@@ -9,7 +9,7 @@ from scvi.model.base import BaseModelClass
 import matplotlib.pyplot as plt
 
 
-def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False, precise : bool = False):
+def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False, precise : bool = False, rep_save : str = None):
     """
     Visualize the effectiveness of the latent projection of the model
     
@@ -57,8 +57,8 @@ def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False,
 
     plt.tight_layout()
     if save : 
-        plt.savefig("Model_Latent.pdf")
-    plt.show(block=True)
+        plt.savefig(f"{rep_save}/img/Model_Latent.png")
+    plt.show()
 
 
 
