@@ -63,7 +63,7 @@ def opts() -> argparse.ArgumentParser:
         "--max_epochs",
         type=int,
         nargs="+",
-        default=None,
+        default=[20],
         metavar="ME",
         help="Maximum epochs to train the model",
     )
