@@ -127,8 +127,12 @@ def main():
                 print(f"Model saved at : {model_save}")
         else:
             if model_save:
-                model = SimpleVAEModel.load(model_save, adata=adata)
-                print(f"Model {model_name} succesfully charged from : {model_save}")
+                if model_name == "simple_vae":
+                    model = SimpleVAEModel.load(model_save, adata=adata)
+                    print(f"Model {model_name} succesfully charged from : {model_save}")
+                elif model_name == "gm_vae":
+                    model = GMVAEModel.load(model_save, adata=adata)
+                    print(f"Model {model_name} succesfully charged from : {model_save}")
             else:
                 raise ValueError("No model given")
 
