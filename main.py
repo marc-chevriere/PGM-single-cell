@@ -100,12 +100,12 @@ def main():
         else:
             raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
 
-
+        print("Train = ",args.training)
         if args.training:
             print(f"Training {model_name}...")
             model.train(max_epochs=max_epochs, logger=None)
             print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
-            if model_save:
+            if model_save != None:
                 model.save(model_save,overwrite=True)
                 print(f"Model saved at : {model_save}")
         else:
