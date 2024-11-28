@@ -137,8 +137,8 @@ def main():
             print("-" * 50)
             print("Imputation Eval")
             corrupt, mask = corrupt_dataset(adata.X)
-            L1_error = evaluate_imputation(adata.X,corrupt,mask)
-            print(f"The L1 error is: {L1_error}")
+            L1_error = evaluate_imputation(adata.X,corrupt,mask,model)
+            print(f"The final L1 error is: {L1_error}")
 
         print("-" * 50)
 
