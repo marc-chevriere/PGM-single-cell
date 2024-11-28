@@ -130,7 +130,7 @@ def main():
             print(f"Comparison mode for {model_name}")
             print("Visualization CLustering")
             vizu_latent_rep(adata,model)
-            plt.show
+            plt.show()
             print("-" * 50)
             print("Clustering Eval")
             clustering_eval(adata,model)

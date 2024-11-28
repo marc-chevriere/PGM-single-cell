@@ -20,6 +20,8 @@ import torch
 ###########################
 
 def cluster_accuracy(true_labels, predicted_labels):
+    print(true_labels)
+    print(predicted_labels)
     contingency_matrix = confusion_matrix(true_labels, predicted_labels)
     row_ind, col_ind = linear_sum_assignment(-contingency_matrix)
     accuracy = contingency_matrix[row_ind, col_ind].sum() / contingency_matrix.sum()
