@@ -68,6 +68,14 @@ def opts() -> argparse.ArgumentParser:
         metavar="ME",
         help="Maximum epochs to train the model",
     )
+    parser.add_argument(
+        "--n_clusters",
+        type=int,
+        nargs="+",
+        default=[9],
+        metavar="ME",
+        help="Number of Cluster for GMVAE",
+    )
     args = parser.parse_args()
     return args
 
@@ -106,7 +114,7 @@ def main():
             model = SimpleVAEModel(adata, n_latent=latent_dim)
         elif model_name == "gm_vae":
             GMVAEModel.setup_anndata(adata)
-            model = GMVAEModel(adata, n_latent=latent_dim)
+            model = GMVAEModel(adata, n_clusters=args.n_clusters ,n_latent=latent_dim)
         else:
             raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
 
