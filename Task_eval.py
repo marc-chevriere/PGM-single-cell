@@ -6,11 +6,11 @@ from scvi.model.base import BaseModelClass
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, silhouette_score
 from sklearn.metrics import homogeneity_score, completeness_score, v_measure_score, confusion_matrix
 from sklearn.cluster import KMeans
-from scipy.optimize import linear_sum_assignment
 import numpy as np
 import torch
 
-
+from utils import cluster_accuracy,sample_from_gmm
+from scviGMvae import GMVAEModel
 
 
 ###########################
@@ -18,13 +18,6 @@ import torch
 ####### CLUSTERING ########
 ###########################
 ###########################
-
-def cluster_accuracy(true_labels, predicted_labels):
-    true_labels = list(map(int, true_labels))
-    contingency_matrix = confusion_matrix(true_labels, predicted_labels)
-    row_ind, col_ind = linear_sum_assignment(-contingency_matrix)
-    accuracy = contingency_matrix[row_ind, col_ind].sum() / contingency_matrix.sum()
-    return accuracy
 
 
 def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = True):     
@@ -39,7 +32,15 @@ def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = Tru
 
     true_labels = (data.obs[type]).to_numpy()
 
-    latent_representation = model.get_latent_representation(data)
+    if type(model)==GMVAEModel : 
+        inference = model.module.inference(torch.tensor(data.X))
+        qzm = inference["qzm"]  
+        qzv = inference["qzv"] 
+        probs_y = inference["probs_y"]  
+
+        latent_representation = sample_from_gmm(qzm, qzv, probs_y).detach().numpy()
+    else : 
+        latent_representation = model.get_latent_representation(data)
 
     #Kmeans on the latent representation
     kmeans = KMeans(n_clusters=len(set(true_labels)), n_init=200, random_state=42)
@@ -72,34 +73,6 @@ def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = Tru
 ####### IMPUTATION ########
 ###########################
 ###########################
-
-
-def corrupt_dataset(data : np.array, method="uniform_zero", corruption_rate=0.1):
-    """
-    Apply a corruption to the dataset as in [2018Lopez].
-
-    """
-    corrupted_data = data.copy()
-    mask = np.zeros_like(data, dtype=bool)
-    
-    # Indice Selection
-    nonzero_indices = np.argwhere(data > 0)
-    num_corruptions = int(len(nonzero_indices) * corruption_rate)
-    selected_indices = nonzero_indices[np.random.choice(len(nonzero_indices), num_corruptions, replace=False)]
-    
-    if method == "uniform_zero":
-        for i, j in selected_indices:
-            corrupted_data[i, j] *= np.random.binomial(1, 0.9)
-    elif method == "binomial":
-        for i, j in selected_indices:
-            corrupted_data[i, j] = np.random.binomial(data[i, j], 0.2)
-    else:
-        raise ValueError("Invalid corruption method. Choose 'uniform_zero' or 'binomial'.")
-    
-    # Mettre à jour le masque
-    mask[tuple(zip(*selected_indices))] = True
-    
-    return corrupted_data, mask
 
 
 def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.array, model : BaseModelClass):

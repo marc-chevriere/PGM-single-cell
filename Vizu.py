@@ -8,32 +8,11 @@ import torch
 import numpy as np
 
 from anndata import AnnData
-#from scvi_perso import SimpleVAEModel, SimpleVAEModule
 from scvi.model.base import BaseModelClass
-from torch.distributions import Normal, Categorical
 import matplotlib.pyplot as plt
 from scviGMvae import GMVAEModel
+from utils import sample_from_gmm
  
-
-#Utils 
-
-def sample_from_gmm(qzm, qzv, probs_y):
-    """
-    Sample points from a Gaussian Mixture Model (GMM).
-    """
-
-    n_samples, n_clusters, n_latent = qzm.shape
-
-    categorical_dist = Categorical(probs_y)  
-    sampled_categories = categorical_dist.sample() 
-
-    selected_means = qzm[torch.arange(n_samples), sampled_categories]  # (n_samples, n_latent)
-    selected_vars = qzv[torch.arange(n_samples), sampled_categories]  # (n_samples, n_latent)
-
-    normal_dist = Normal(selected_means, torch.sqrt(selected_vars))
-    samples = normal_dist.rsample()  # (n_samples, n_latent)
-
-    return samples
 
 
 #VIZU

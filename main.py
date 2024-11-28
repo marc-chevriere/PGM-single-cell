@@ -9,7 +9,8 @@ from anndata import AnnData
 from scvi_perso import SimpleVAEModel
 from scviGMvae import GMVAEModel
 from Vizu import vizu_latent_rep
-from Task_eval import clustering_eval, corrupt_dataset, evaluate_imputation
+from Task_eval import clustering_eval, evaluate_imputation
+from utils import corrupt_dataset
 
 
 def opts() -> argparse.ArgumentParser:
