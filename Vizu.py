@@ -58,7 +58,7 @@ def vizu_latent_rep(data : AnnData, model : BaseModelClass, save : bool = False,
     plt.tight_layout()
     if save : 
         plt.savefig("Model_Latent.pdf")
-    plt.show()
+    plt.show(block=True)
 
 
 
