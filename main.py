@@ -71,8 +71,7 @@ def opts() -> argparse.ArgumentParser:
     parser.add_argument(
         "--n_clusters",
         type=int,
-        nargs="+",
-        default=[9],
+        default=9,
         metavar="ME",
         help="Number of Cluster for GMVAE",
     )
