@@ -14,7 +14,7 @@ from Task_eval import clustering_eval, corrupt_dataset, evaluate_imputation
 
 def opts() -> argparse.ArgumentParser:
     """Option Handling Function."""
-    parser = argparse.ArgumentParser(description="RecVis A3 training script")
+    parser = argparse.ArgumentParser(description="training script")
     parser.add_argument(
         "--data",
         type=AnnData,
@@ -40,17 +40,17 @@ def opts() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--eval",
-        type=bool,
+        type=str_to_bool,  
         default=True,
         metavar="CO",
         help="Evaluation Mode",
     )
     parser.add_argument(
         "--training",
-        type=bool,
+        type=str_to_bool,  
         default=False,
         metavar="TR",
-        help="Train the model or you have already a train model",
+        help="Train the model or use an already trained model",
     )
     parser.add_argument(
         "--model_saves",
@@ -71,6 +71,16 @@ def opts() -> argparse.ArgumentParser:
     args = parser.parse_args()
     return args
 
+def str_to_bool(value):
+    if isinstance(value, bool):
+        return value
+    if value.lower() in {"true", "1", "yes"}:
+        return True
+    elif value.lower() in {"false", "0", "no"}:
+        return False
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
+    
 
 def main():
     """Main function for training and evaluation."""
