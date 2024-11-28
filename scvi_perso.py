@@ -7,7 +7,7 @@ from torch import nn
 from anndata import AnnData
 from scvi.data import AnnDataManager
 from scvi.model.base import BaseModelClass, UnsupervisedTrainingMixin, VAEMixin
-from scvi.model.base import BaseModuleClass, LossOutput, auto_move_data
+from scvi.module.base import BaseModuleClass, LossOutput, auto_move_data
 from scvi import REGISTRY_KEYS
 from scvi.data.fields import CategoricalJointObsField, CategoricalObsField, LayerField, NumericalJointObsField, NumericalObsField
 from torch.distributions import Normal, NegativeBinomial 
