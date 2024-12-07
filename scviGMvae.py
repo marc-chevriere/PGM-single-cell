@@ -83,32 +83,7 @@ class EncoderXYtoZ(nn.Module):
         logvar_n = self.output_logvar(h)
         return mean_n, logvar_n
     
-
-class DecoderYtoZ(nn.Module):
-    def __init__(self, n_clusters: int, n_latent: int, n_hidden: int = 128):
-        super().__init__()
-        self.mlp = nn.Sequential(
-            nn.Linear(n_clusters, n_hidden),
-            nn.BatchNorm1d(n_hidden),
-            nn.ReLU(),
-            nn.Dropout(p=0.1),   
-            nn.Linear(n_hidden, n_hidden),
-            nn.BatchNorm1d(n_hidden),
-            nn.ReLU(),
-            nn.Dropout(p=0.1)
-        )
-        self.output_mean_n = nn.Linear(n_hidden, n_latent)
-        self.output_logvar_n = nn.Linear(n_hidden, n_latent) 
-
-    def forward(self, probs_y: torch.Tensor):
-        h = self.mlp(probs_y)
-        mean_n = self.output_mean_n(h)
-        logvar_n = self.output_logvar_n(h)
-        return mean_n, logvar_n
     
-
-
-
 class DecoderZtoX(nn.Module):
     def __init__(self, n_output: int, n_latent: int, n_hidden: int = 128):
         super().__init__()
