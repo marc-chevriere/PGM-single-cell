@@ -4,12 +4,12 @@
 from anndata import AnnData
 from scvi.model.base import BaseModelClass
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, silhouette_score
-from sklearn.metrics import homogeneity_score, completeness_score, v_measure_score, confusion_matrix
+from sklearn.metrics import homogeneity_score, completeness_score, v_measure_score
 from sklearn.cluster import KMeans
 import numpy as np
 import torch
 
-from utils import cluster_accuracy,sample_from_gmm
+from utils import cluster_accuracy
 from scviGMvae import GMVAEModel
 
 
@@ -20,31 +20,23 @@ from scviGMvae import GMVAEModel
 ###########################
 
 
-def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = True):     
+def clustering_eval(data : AnnData, model : BaseModelClass, style : str):     
     """
     Evaluate Clustering task for scVI models.
 
     """
-    if precise : 
-        style = "precise_labels"
-    else : 
-        style = "cell_type"
 
     true_labels = (data.obs[style]).to_numpy()
 
+    latent_representation = model.get_latent_representation(data)
     if type(model) == GMVAEModel : 
-        inference = model.module.inference(torch.tensor(data.X))
-        qzm = inference["qzm"]  
-        qzv = inference["qzv"] 
-        probs_y = inference["probs_y"]  
-
-        latent_representation = sample_from_gmm(qzm, qzv, probs_y).detach().numpy()
-    else : 
-        latent_representation = model.get_latent_representation(data)
-
-    #Kmeans on the latent representation
-    kmeans = KMeans(n_clusters=len(set(true_labels)), n_init=200, random_state=42)
-    predicted_labels = kmeans.fit_predict(latent_representation)
+        latent_cat = latent_representation["latent_cat"]
+        latent_representation = latent_representation["latent_rep"]
+        predicted_labels = np.argmax(latent_cat, axis=-1)
+    else:
+        #Kmeans on the latent representation
+        kmeans = KMeans(n_clusters=len(set(true_labels)), n_init=200, random_state=42)
+        predicted_labels = kmeans.fit_predict(latent_representation)
 
     #Various ways of evaluating the clustering
     ari = adjusted_rand_score(true_labels, predicted_labels)
@@ -75,22 +67,25 @@ def clustering_eval(data : AnnData, model : BaseModelClass, precise : bool = Tru
 ###########################
 
 
-def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.array, model : BaseModelClass):
+def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.array, model : BaseModelClass, model_name: str):
     """
     Evaluate Imputation task for scVI models.
 
     """
-
     corrupted_data_tensor = torch.tensor(corrupted_data, dtype=torch.float32)
     
     with torch.no_grad():
         inference_outputs = model.module.inference(corrupted_data_tensor)
-        z = inference_outputs["z"]  
+        z = inference_outputs["z"]
         generative_outputs = model.module.generative(z)
-        imputed_values = generative_outputs["nb_mean"].numpy() 
+        imputed_values = generative_outputs["nb_mean"]
+        if model_name=="gm_vae":
+            probs_y = inference_outputs["probs_y"]
+            imputed_values = (imputed_values * probs_y.unsqueeze(-1)).sum(dim=1)
+        imputed_values = imputed_values.cpu().numpy()
 
     # L1 distance for corrupted data
-    print(data.shape,data[mask].shape,imputed_values.shape)#,imputed_values[mask].shape)
+    # print(data.shape,data[mask].shape,imputed_values.shape)#,imputed_values[mask].shape)
     l1_distances = np.abs(data[mask] - imputed_values[mask])
     median_l1 = np.median(l1_distances)
     

@@ -2,7 +2,11 @@
 
 .DS_Store
 data/
-tb_logs/
 wandb/
 
 saved_model_dir/
+save_models/
+logs/
+__pycache__/
+
+*.ipynb

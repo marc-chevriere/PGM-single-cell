@@ -2,7 +2,6 @@
 
 #IMPORT 
 import torch 
-import scvi
 from torch import nn, Tensor
 from anndata import AnnData
 from scvi.data import AnnDataManager
@@ -195,7 +194,7 @@ class GMVAEModule(BaseModuleClass):
             "qzv": var_n,
             "z": z_normales,
             "probs_y": probs_y,
-            "z_normales": z_normales
+            "z_normales": z_normales,
         }
 
     def _get_generative_input(
@@ -306,8 +305,11 @@ class GMVAEModel(VAEMixin, UnsupervisedTrainingMixin, BaseModelClass):
             outputs = self.module.inference(**inference_inputs)
             qz_m = outputs["qzm"]
             probs_y = outputs["probs_y"]
-            latent_rep += [qz_m.cpu()]
             latent_cat += [probs_y.cpu()]
+            probs_y = probs_y.unsqueeze(-1)
+            qzm_pond = (qz_m * probs_y).sum(dim=1)
+            latent_rep += [qzm_pond.cpu()]
+            
         latent["latent_rep"] = torch.cat(latent_rep).detach().numpy()
         latent["latent_cat"] = torch.cat(latent_cat).detach().numpy()
         return latent
