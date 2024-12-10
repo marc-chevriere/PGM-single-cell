@@ -9,4 +9,4 @@ save_models/
 logs/
 __pycache__/
 
-*.ipynb
+#*.ipynb
