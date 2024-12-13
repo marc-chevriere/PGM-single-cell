@@ -47,7 +47,7 @@ def clustering_eval(data : AnnData, model : BaseModelClass, style : str):
     v_measure = v_measure_score(true_labels, predicted_labels)
     accuracy = cluster_accuracy(true_labels, predicted_labels)
 
-    print("Simple VAE :")
+    print("VAE :")
     print(f"  Adjusted Rand Index (ARI): {ari:.4f}")
     print(f"  Normalized Mutual Information (NMI): {nmi:.4f}")
     print(f"  Silhouette Score: {silhouette:.4f}")
@@ -67,7 +67,9 @@ def clustering_eval(data : AnnData, model : BaseModelClass, style : str):
 ###########################
 
 
-def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.array, model : BaseModelClass, model_name: str):
+def evaluate_imputation(data : np.array, corrupted_data : np.array, 
+                        mask : np.array, model : BaseModelClass, model_name: str,
+                        likelihood: str):
     """
     Evaluate Imputation task for scVI models.
 
@@ -78,14 +80,33 @@ def evaluate_imputation(data : np.array, corrupted_data : np.array, mask : np.ar
         inference_outputs = model.module.inference(corrupted_data_tensor)
         z = inference_outputs["z"]
         generative_outputs = model.module.generative(z)
-        imputed_values = generative_outputs["nb_mean"]
+        if likelihood == 'nb':
+            imputed_values = generative_outputs["mean"]
+        
+        elif likelihood == 'zinb':
+            nb_mean = generative_outputs["mean"]
+            zero_prob = generative_outputs["zero_prob"]
+            pi = torch.sigmoid(zero_prob)  
+            imputed_values = (1 - pi) * nb_mean
+        
+        elif likelihood == 'p':
+            imputed_values = generative_outputs["lambda"]
+        
+        elif likelihood == 'zip':
+            lambda_ = generative_outputs["lambda"]
+            zero_prob = generative_outputs["zero_prob"]
+            pi = torch.sigmoid(zero_prob) 
+            imputed_values = (1 - pi) * lambda_
+        
+        else:
+            raise ValueError(f"Unsupported likelihood: {likelihood}")
+
         if model_name=="gm_vae":
             probs_y = inference_outputs["probs_y"]
             imputed_values = (imputed_values * probs_y.unsqueeze(-1)).sum(dim=1)
         imputed_values = imputed_values.cpu().numpy()
 
     # L1 distance for corrupted data
-    # print(data.shape,data[mask].shape,imputed_values.shape)#,imputed_values[mask].shape)
     l1_distances = np.abs(data[mask] - imputed_values[mask])
     median_l1 = np.median(l1_distances)
     

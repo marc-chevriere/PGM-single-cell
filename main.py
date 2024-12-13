@@ -40,6 +40,13 @@ def opts() -> argparse.ArgumentParser:
         help="Name of the model",
     )
     parser.add_argument(
+        "--likelihood",
+        type=str,  
+        default="nb",
+        metavar="CO",
+        help="Evaluation Mode",
+    )
+    parser.add_argument(
         "--eval",
         type=str_to_bool,  
         default=True,
@@ -124,17 +131,17 @@ def main():
         if args.use_wandb:
             wandb_logger = WandbLogger(
                 project='PGM-single-cell',
-                name=f"{model_name}_latent{latent_dim}_epochs{max_epochs}",
+                name=f"{model_name}_latent{latent_dim}_likelihood_{args.likelihood}",
                 log_model=True
             )
 
         if model_name == "simple_vae":
             SimpleVAEModel.setup_anndata(adata)
-            model = SimpleVAEModel(adata, n_latent=latent_dim)
+            model = SimpleVAEModel(adata, n_latent=latent_dim, likelihood=args.likelihood)
         elif model_name == "gm_vae":
             GMVAEModel.setup_anndata(adata)
             n_clusters = len(adata.obs[args.cluster_type].unique())
-            model = GMVAEModel(adata, n_clusters=n_clusters ,n_latent=latent_dim)
+            model = GMVAEModel(adata, n_clusters=n_clusters ,n_latent=latent_dim, likelihood=args.likelihood)
         else:
             raise ValueError(f"Unknown model : {model_name}, try with simple_vae or gm_vae.")
 
@@ -171,14 +178,26 @@ def main():
             plt.show()
             print("-" * 50)
             print("Clustering Eval")
-            clustering_eval(adata,model, style=args.cluster_type)
+            ari, nmi, silhouette, homogeneity, completeness, v_measure, accuracy = clustering_eval(adata,model, style=args.cluster_type)
             print("-" * 50)
             print("Imputation Eval")
             test_idx = model.trainer.datamodule.test_idx 
             test_adata = adata[test_idx, :].copy()
             corrupt, mask = corrupt_dataset(test_adata.X)
-            L1_error = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name)
+            L1_error = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name, likelihood=args.likelihood)
             print(f"The final L1 error is: {L1_error}")
+            metrics = {
+                "ARI": ari,
+                "NMI": nmi,
+                "Silhouette": silhouette,
+                "Homogeneity": homogeneity,
+                "Completeness": completeness,
+                "V-measure": v_measure,
+                "Accuracy": accuracy,
+                "L1_error": L1_error
+            }
+            if args.use_wandb:
+                wandb_logger.log_metrics(metrics)
 
         print("-" * 50)
         if args.use_wandb:

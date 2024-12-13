@@ -10,8 +10,9 @@ from scvi.model.base import BaseModelClass, UnsupervisedTrainingMixin, VAEMixin
 from scvi.module.base import BaseModuleClass, LossOutput, auto_move_data
 from scvi import REGISTRY_KEYS
 from scvi.data.fields import CategoricalJointObsField, CategoricalObsField, LayerField, NumericalJointObsField, NumericalObsField
-from torch.distributions import Normal, NegativeBinomial 
+from torch.distributions import Normal, NegativeBinomial , Poisson
 from torch.distributions import kl_divergence as kl
+import torch.nn.functional as F
 
 
 ###########################
@@ -38,6 +39,59 @@ class SimpleDecoder(nn.Module):
         mean = torch.nn.functional.softplus(self.output_mean(h))
         disp = torch.nn.functional.softplus(self.output_disp(h))
         return mean, disp
+    
+# DECODER (NN5 & NN6)
+class SimpleDecoder(nn.Module):
+    def __init__(self, n_latent: int, n_output: int, likelihood: str, n_hidden: int = 128):
+        super().__init__()
+        self.likelihood = likelihood.lower()
+        self.n_latent = n_latent
+        self.n_output = n_output
+        
+        self.fc1 = nn.Linear(n_latent, n_hidden)
+        self.bn1 = nn.BatchNorm1d(n_hidden)
+        self.fc2 = nn.Linear(n_hidden, n_hidden)
+        self.bn2 = nn.BatchNorm1d(n_hidden)
+        self.dropout = nn.Dropout(p=0.1)
+        
+        if self.likelihood in ['nb', 'zinb']:
+            self.output_mean = nn.Linear(n_hidden, n_output)
+            self.output_disp = nn.Linear(n_hidden, n_output)
+            if self.likelihood == 'zinb':
+                self.output_zero_prob = nn.Linear(n_hidden, n_output)
+        elif self.likelihood in ['p', 'zip']:
+            self.output_lambda = nn.Linear(n_hidden, n_output)
+            if self.likelihood == 'zip':
+                self.output_zero_prob = nn.Linear(n_hidden, n_output)
+        else:
+            raise ValueError(f"Unsupported likelihood: {self.likelihood}")
+
+    def forward(self, z: torch.Tensor):
+        h = self.dropout(F.relu(self.bn1(self.fc1(z))))
+        h = self.dropout(F.relu(self.bn2(self.fc2(h))))
+        
+        if self.likelihood == 'nb':
+            mean = F.softplus(self.output_mean(h))
+            disp = F.softplus(self.output_disp(h))
+            return {'mean': mean, 'disp': disp}
+        
+        elif self.likelihood == 'zinb':
+            mean = F.softplus(self.output_mean(h))
+            disp = F.softplus(self.output_disp(h))
+            zero_prob = torch.sigmoid(self.output_zero_prob(h))
+            return {'mean': mean, 'disp': disp, 'zero_prob': zero_prob}
+        
+        elif self.likelihood == 'p':
+            lambda_ = F.softplus(self.output_lambda(h))
+            return {'lambda': lambda_}
+        
+        elif self.likelihood == 'zip':
+            lambda_ = F.softplus(self.output_lambda(h))
+            zero_prob = torch.sigmoid(self.output_zero_prob(h))
+            return {'lambda': lambda_, 'zero_prob': zero_prob}
+        
+        else:
+            raise ValueError(f"Unsupported likelihood: {self.likelihood}")
 
 #ENCODER (NN3 & NN4)
 class SimpleEncoder(nn.Module):
@@ -85,11 +139,13 @@ class SimpleVAEModule(BaseModuleClass):
     def __init__(
         self,
         n_input: int,
+        likelihood: str,
         n_latent: int = 10,
     ):
         super().__init__()
+        self.likelihood = likelihood.lower()
         self.encoder = SimpleEncoder(n_input, n_latent)
-        self.decoder = SimpleDecoder(n_latent, n_input)
+        self.decoder = SimpleDecoder(n_latent, n_input, likelihood=self.likelihood)
 
 
     def _get_inference_input(self, tensors: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
@@ -122,11 +178,8 @@ class SimpleVAEModule(BaseModuleClass):
     @auto_move_data
     def generative(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
         """Runs the generative model."""
-        nb_mean, nb_disp = self.decoder(z)
-        return {
-            "nb_mean":nb_mean,
-            "nb_disp":nb_disp,
-        }
+        generative_outputs = self.decoder(z)
+        return generative_outputs
 
     def loss(
         self,
@@ -135,12 +188,47 @@ class SimpleVAEModule(BaseModuleClass):
         generative_outputs: dict[str, torch.Tensor],
     ) -> LossOutput:
         x = tensors[REGISTRY_KEYS.X_KEY]
-        nb_mean = generative_outputs["nb_mean"]
-        nb_disp = generative_outputs["nb_disp"]
+        
+        if self.likelihood == 'nb':
+            nb_mean = generative_outputs["mean"]
+            nb_disp = generative_outputs["disp"]
+            log_likelihood = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4)).log_prob(x).sum(dim=-1)
+        
+        elif self.likelihood == 'zinb':
+            nb_mean = generative_outputs["mean"]
+            nb_disp = generative_outputs["disp"]
+            zero_prob = generative_outputs["zero_prob"]
+            nb_dist = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4))
+            log_nb_prob = nb_dist.log_prob(x)
+            log_nb_prob_zero = nb_dist.log_prob(torch.zeros_like(x))
+            log_likelihood = torch.where(
+                x == 0,
+                torch.log(torch.sigmoid(zero_prob) + torch.exp(log_nb_prob_zero) * (1 - torch.sigmoid(zero_prob)) + 1e-10),
+                torch.log(1 - torch.sigmoid(zero_prob)) + log_nb_prob
+            ).sum(dim=-1)
+        
+        elif self.likelihood == 'p':
+            lambda_ = generative_outputs["lambda"]
+            poisson_dist = Poisson(rate=lambda_)
+            log_likelihood = poisson_dist.log_prob(x).sum(dim=-1)
+        
+        elif self.likelihood == 'zip':
+            lambda_ = generative_outputs["lambda"]
+            zero_prob = generative_outputs["zero_prob"]
+            poisson_dist = Poisson(rate=lambda_)
+            log_poisson_prob = poisson_dist.log_prob(x)
+            log_poisson_prob_zero = poisson_dist.log_prob(torch.zeros_like(x))
+            log_likelihood = torch.where(
+                x == 0,
+                torch.log(torch.sigmoid(zero_prob) + torch.exp(log_poisson_prob_zero) * (1 - torch.sigmoid(zero_prob)) + 1e-10),
+                torch.log(1 - torch.sigmoid(zero_prob)) + log_poisson_prob
+            ).sum(dim=-1)
+        
+        else:
+            raise ValueError(f"Unsupported likelihood: {self.likelihood}")
+
         qz_m = inference_outputs["qzm"]
         qz_v = inference_outputs["qzv"]
-
-        log_likelihood = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean+1e-4)).log_prob(x).sum(dim=-1)
 
         prior_dist = Normal(torch.zeros_like(qz_m), torch.ones_like(qz_v))
         var_post_dist = Normal(qz_m, torch.sqrt(qz_v))
@@ -155,27 +243,27 @@ class SimpleVAEModule(BaseModuleClass):
         )
 
 
-
-
 class SimpleVAEModel(VAEMixin, UnsupervisedTrainingMixin, BaseModelClass):
-    """single-cell Variational Inference [Lopez18]_."""
+    """Single-cell Variational Inference with multiple likelihoods."""
 
     def __init__(
         self,
         adata: AnnData,
         n_latent: int = 10,
+        likelihood: str = 'nb',
         **model_kwargs,
     ):
         super().__init__(adata)
 
         self.module = SimpleVAEModule(
             n_input=self.summary_stats["n_vars"],
-            # n_batch=self.summary_stats["n_batch"],
             n_latent=n_latent,
+            likelihood=likelihood,
             **model_kwargs,
         )
         self._model_summary_string = (
-            f"SCVI Model with the following params: \nn_latent: {n_latent}"
+            f"SCVI Model with the following params: \n"
+            f"n_latent: {n_latent}, likelihood: {likelihood}"
         )
         self.init_params_ = self._get_init_params(locals())
 
