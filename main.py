@@ -160,7 +160,8 @@ def main():
                 model.save(model_save,overwrite=True)
                 print(f"Model saved at : {model_save}")
         else:
-            if model_save:
+            if model_save != None:
+                model_save = model_save + "model.pt"
                 if model_name == "simple_vae":
                     model = SimpleVAEModel.load(model_save, adata=adata)
                     print(f"Model {model_name} succesfully charged from : {model_save}")
