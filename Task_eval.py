@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from utils import cluster_accuracy
-from scviGMvae import GMVAEModel
+from gm_vae import GMVAEModel
 
 
 ###########################

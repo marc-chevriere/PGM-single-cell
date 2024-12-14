@@ -192,13 +192,14 @@ class SimpleVAEModule(BaseModuleClass):
         if self.likelihood == 'nb':
             nb_mean = generative_outputs["mean"]
             nb_disp = generative_outputs["disp"]
-            log_likelihood = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4)).log_prob(x).sum(dim=-1)
+            log_likelihood = NegativeBinomial(total_count=nb_disp, 
+                                              logits=torch.log((nb_disp / nb_mean) + 1e-4)).log_prob(x).sum(dim=-1)
         
         elif self.likelihood == 'zinb':
             nb_mean = generative_outputs["mean"]
             nb_disp = generative_outputs["disp"]
             zero_prob = generative_outputs["zero_prob"]
-            nb_dist = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4))
+            nb_dist = NegativeBinomial(total_count=nb_disp, logits=torch.log((nb_disp / nb_mean) + 1e-4))
             log_nb_prob = nb_dist.log_prob(x)
             log_nb_prob_zero = nb_dist.log_prob(torch.zeros_like(x))
             log_likelihood = torch.where(

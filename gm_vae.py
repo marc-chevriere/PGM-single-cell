@@ -259,14 +259,14 @@ class GMVAEModule(BaseModuleClass):
         if self.likelihood == 'nb':
             nb_mean = generative_outputs["mean"]  # (batch_size, n_clusters, n_output)
             nb_disp = generative_outputs["disp"]  # (batch_size, n_clusters, n_output)
-            log_likelihood = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4)).log_prob(x_expanded).sum(dim=-1)  # (batch_size, n_clusters)
+            log_likelihood = NegativeBinomial(total_count=nb_disp, logits=torch.log((nb_disp / nb_mean) + 1e-4)).log_prob(x_expanded).sum(dim=-1)  # (batch_size, n_clusters)
         elif self.likelihood == 'zinb':
             nb_mean = generative_outputs["mean"]
             nb_disp = generative_outputs["disp"]
             zero_prob = generative_outputs["zero_prob"]
             pi = torch.sigmoid(zero_prob)  # Probabilité d'inflation zéro
             
-            nb_dist = NegativeBinomial(total_count=nb_disp, logits=torch.log(nb_mean + 1e-4))
+            nb_dist = NegativeBinomial(total_count=nb_disp, logits=torch.log((nb_disp / nb_mean) + 1e-4))
             log_nb_prob = nb_dist.log_prob(x_expanded)
             log_nb_prob_zero = nb_dist.log_prob(torch.zeros_like(x_expanded))
             

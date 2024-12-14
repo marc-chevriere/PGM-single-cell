@@ -9,7 +9,7 @@ import wandb
 from anndata import AnnData
 from scvi.model.base import BaseModelClass
 import matplotlib.pyplot as plt
-from scviGMvae import GMVAEModel 
+from gm_vae import GMVAEModel 
 
 
 #VIZU
