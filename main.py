@@ -152,8 +152,8 @@ def main():
                 max_epochs=max_epochs, 
                 logger=wandb_logger, 
                 accelerator=args.accelerator,
-                train_size=0.85,
-                validation_size=0,
+                train_size=0.75,
+                validation_size=0.1,
                 )
             print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
             if model_save != None:
