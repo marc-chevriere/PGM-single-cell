@@ -2,6 +2,7 @@
 
 import argparse
 import matplotlib.pyplot as plt
+import os
 
 import scvi
 from anndata import AnnData
@@ -152,22 +153,25 @@ def main():
                 max_epochs=max_epochs, 
                 logger=wandb_logger, 
                 accelerator=args.accelerator,
-                train_size=0.75,
-                validation_size=0.1,
+                train_size=0.85,
+                validation_size=0,
                 )
             print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
-            if model_save != None:
-                model.save(model_save,overwrite=True)
-                print(f"Model saved at : {model_save}")
+            if model_save is not None:
+                model_filename = "model.pt"  
+                model_path = os.path.join(model_save, model_filename)
+                os.makedirs(model_save, exist_ok=True)
+                model.save(model_path, overwrite=True)
+                print(f"Model saved at : {model_path}")
         else:
-            if model_save != None:
-                model_save = model_save + "model.pt"
+            if model_save is not None:
+                model_path = os.path.join(model_save, "model.pt")
                 if model_name == "simple_vae":
-                    model = SimpleVAEModel.load(model_save, adata=adata)
-                    print(f"Model {model_name} succesfully charged from : {model_save}")
+                    model = SimpleVAEModel.load(model_path, adata=adata)
+                    print(f"Model '{model_name}' successfully loaded from: {model_path}")
                 elif model_name == "gm_vae":
-                    model = GMVAEModel.load(model_save, adata=adata)
-                    print(f"Model {model_name} succesfully charged from : {model_save}")
+                    model = GMVAEModel.load(model_path, adata=adata)
+                    print(f"Model '{model_name}' successfully loaded from: {model_path}")
             else:
                 raise ValueError("No model given")
 
