@@ -44,7 +44,7 @@ def opts() -> argparse.ArgumentParser:
         type=str,  
         default="nb",
         metavar="CO",
-        help="Evaluation Mode",
+        help="Type of likelihood. ('nb' -> negative binomial, 'zinb' -> zero inflated nb, 'p' -> poisson, 'zip' -> zero inflated p)",
     )
     parser.add_argument(
         "--eval",
