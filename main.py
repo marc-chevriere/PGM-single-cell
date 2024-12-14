@@ -158,20 +158,17 @@ def main():
                 )
             print(f"Model {model_name} train with success (elbo={model.get_elbo().item()}).")
             if model_save is not None:
-                model_filename = "model.pt"  
-                model_path = os.path.join(model_save, model_filename)
                 os.makedirs(model_save, exist_ok=True)
-                model.save(model_path, overwrite=True)
-                print(f"Model saved at : {model_path}")
+                model.save(model_save, overwrite=True)
+                print(f"Model saved at : {model_save}")
         else:
             if model_save is not None:
-                model_path = os.path.join(model_save, "model.pt")
                 if model_name == "simple_vae":
-                    model = SimpleVAEModel.load(model_path, adata=adata)
-                    print(f"Model '{model_name}' successfully loaded from: {model_path}")
+                    model = SimpleVAEModel.load(model_save, adata=adata)
+                    print(f"Model '{model_name}' successfully loaded from: {model_save}")
                 elif model_name == "gm_vae":
-                    model = GMVAEModel.load(model_path, adata=adata)
-                    print(f"Model '{model_name}' successfully loaded from: {model_path}")
+                    model = GMVAEModel.load(model_save, adata=adata)
+                    print(f"Model '{model_name}' successfully loaded from: {model_save}")
             else:
                 raise ValueError("No model given")
 
