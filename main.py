@@ -9,7 +9,7 @@ from pytorch_lightning.loggers import WandbLogger
 from simple_vae import SimpleVAEModel
 from gm_vae import GMVAEModel
 from visualization import visu_latent_rep
-from Task_eval import clustering_eval, evaluate_imputation
+from task_eval import clustering_eval, evaluate_imputation
 from utils import corrupt_dataset
 
 
