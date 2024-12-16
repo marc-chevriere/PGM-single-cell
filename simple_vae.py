@@ -21,24 +21,6 @@ import torch.nn.functional as F
 ###########################
 ###########################
 
-#DECODER (NN5 & NN6)
-class SimpleDecoder(nn.Module):
-    def __init__(self, n_latent: int, n_output: int, n_hidden: int = 128):
-        super().__init__()
-        self.fc1 = nn.Linear(n_latent, n_hidden)
-        self.bn1 = nn.BatchNorm1d(n_hidden)
-        self.fc2 = nn.Linear(n_hidden, n_hidden)
-        self.bn2 = nn.BatchNorm1d(n_hidden)
-        self.output_mean = nn.Linear(n_hidden, n_output)
-        self.output_disp = nn.Linear(n_hidden, n_output)
-        self.dropout = nn.Dropout(p=0.1)
-
-    def forward(self, z: torch.Tensor):
-        h = self.dropout(torch.relu(self.bn1(self.fc1(z))))
-        h = self.dropout(torch.relu(self.bn2(self.fc2(h))))
-        mean = torch.nn.functional.softplus(self.output_mean(h))
-        disp = torch.nn.functional.softplus(self.output_disp(h))
-        return mean, disp
     
 # DECODER (NN5 & NN6)
 class SimpleDecoder(nn.Module):
@@ -106,8 +88,8 @@ class SimpleEncoder(nn.Module):
         self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, x: torch.Tensor):
-        h = torch.relu(self.fc1(x))
-        h = torch.relu(self.fc2(h))
+        h = self.dropout(torch.relu(self.bn1(self.fc1(x))))
+        h = self.dropout(torch.relu(self.bn2(self.fc2(h))))
         mean = self.mean_layer(h)
         log_var = self.var_layer(h)
         return mean, log_var

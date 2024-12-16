@@ -189,8 +189,9 @@ def main():
             test_idx = model.trainer.datamodule.test_idx 
             test_adata = adata[test_idx, :].copy()
             corrupt, mask = corrupt_dataset(data=test_adata.X)
-            L1_error = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name, likelihood=args.likelihood)
+            L1_error, L1_error_corrupted = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name, likelihood=args.likelihood)
             print(f"The final L1 error is: {L1_error}")
+            print(f"The final L1 error for corrupted dataset is: {L1_error_corrupted}")
             metrics = {
                 "ARI": ari,
                 "NMI": nmi,

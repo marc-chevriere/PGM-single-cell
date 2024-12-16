@@ -107,8 +107,10 @@ def evaluate_imputation(data : np.array, corrupted_data : np.array,
         imputed_values = imputed_values.cpu().numpy()
 
     # L1 distance for corrupted data
+    l1_distances_corrupted = np.abs(corrupted_data_tensor[mask] - imputed_values[mask])
     l1_distances = np.abs(data[mask] - imputed_values[mask])
     median_l1 = np.median(l1_distances)
+    median_l1_corrupted = np.median(l1_distances_corrupted)
     
-    return median_l1
+    return median_l1, median_l1_corrupted
 
