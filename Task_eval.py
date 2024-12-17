@@ -53,7 +53,7 @@ def clustering_eval(data : AnnData, model : BaseModelClass, style : str):
     print(f"  Silhouette Score: {silhouette:.4f}")
     print(f"  Homogeneity Score: {homogeneity:.4f}")
     print(f"  Completeness Score: {completeness:.4f}")
-    print(f"  Cluster Accuracy: {completeness:.4f}")
+    print(f"  Cluster Accuracy: {accuracy:.4f}")
 
     return ari, nmi, silhouette, homogeneity, completeness, v_measure, accuracy
 
