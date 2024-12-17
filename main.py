@@ -189,9 +189,12 @@ def main():
             test_idx = model.trainer.datamodule.test_idx 
             test_adata = adata[test_idx, :].copy()
             corrupt, mask = corrupt_dataset(data=test_adata.X)
-            L1_error, L1_error_corrupted = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name, likelihood=args.likelihood)
-            print(f"The final L1 error is: {L1_error}")
-            print(f"The final L1 error for corrupted dataset is: {L1_error_corrupted}")
+            median_l1, median_l1_corrupted, mean_l1, mean_l1_corrupted = evaluate_imputation(test_adata.X,corrupt,mask,model, model_name, likelihood=args.likelihood)
+            print(f"The final L1 error are:")
+            print(f"- median reconstruction: {median_l1}")
+            print(f"- median on raw corrupted dataset: {median_l1_corrupted}")
+            print(f"- mean reconstruction: {mean_l1}")
+            print(f"- mean on raw corrupted dataset: {mean_l1_corrupted}")
             metrics = {
                 "ARI": ari,
                 "NMI": nmi,
@@ -200,7 +203,10 @@ def main():
                 "Completeness": completeness,
                 "V-measure": v_measure,
                 "Accuracy": accuracy,
-                "L1_error": L1_error
+                "L1 error": median_l1,
+                "L1 error_corrupted": median_l1_corrupted,
+                "L1 error mean":mean_l1,
+                "L1 error corrupted mean":mean_l1_corrupted,
             }
             if args.use_wandb:
                 wandb_logger.log_metrics(metrics)

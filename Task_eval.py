@@ -111,6 +111,8 @@ def evaluate_imputation(data : np.array, corrupted_data : np.array,
     l1_distances = np.abs(data[mask] - imputed_values[mask])
     median_l1 = np.median(l1_distances)
     median_l1_corrupted = np.median(l1_distances_corrupted)
+    mean_l1 = np.mean(l1_distances)
+    mean_l1_corrupted = np.mean(l1_distances_corrupted)
     
-    return median_l1, median_l1_corrupted
+    return median_l1, median_l1_corrupted, mean_l1, mean_l1_corrupted
 
