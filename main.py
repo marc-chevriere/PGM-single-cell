@@ -28,7 +28,7 @@ def opts() -> argparse.ArgumentParser:
         "--latent_dims",
         type=int,
         nargs="+",
-        default=[10, 10],
+        default=[10],
         metavar="LD",
         help="Dimension of latent dimension for the model",
     )
@@ -36,7 +36,7 @@ def opts() -> argparse.ArgumentParser:
         "--model_names",
         type=str,
         nargs="+",
-        default=["simple_vae", "gm_vae"],
+        default=["simple_vae"],
         metavar="MOD",
         help="Name of the model",
     )
@@ -65,7 +65,7 @@ def opts() -> argparse.ArgumentParser:
         "--model_saves",
         type=str,
         nargs="+",
-        default=[None, None], 
+        default=[None], 
         metavar="MS",
         help="Emplacement of the save model or the emplacement where you want to save the model(if Training=True)",
     )
@@ -73,7 +73,7 @@ def opts() -> argparse.ArgumentParser:
         "--max_epochs",
         type=int,
         nargs="+",
-        default=[20, 20],
+        default=[20],
         metavar="ME",
         help="Maximum epochs to train the model",
     )
@@ -94,7 +94,7 @@ def opts() -> argparse.ArgumentParser:
     parser.add_argument(
         "--use_wandb",
         type=str_to_bool,
-        default=True,
+        default=False,
         metavar="WB",
         help="Use Weights & Biases (wandb) for logging",
     )
